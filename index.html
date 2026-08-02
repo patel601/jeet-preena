@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome – Jeet & Preena's Reception</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #04040f;
+    color: #f0e6c8;
+    font-family: 'Georgia', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Stars ── */
+  #stars-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Fairy lights ── */
+  .string-lights {
+    position: relative;
+    width: 100%;
+    height: 58px;
+    z-index: 1;
+    overflow: hidden;
+  }
+  .fairy-wire {
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #3a1525 6%, #3a1525 94%, transparent 100%);
+  }
+  .fairy-dot {
+    position: absolute;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    animation: fairyGlow 3s ease-in-out infinite alternate;
+  }
+  @keyframes fairyGlow {
+    0%   { opacity: 0.15; box-shadow: 0 0 2px 1px var(--c); }
+    100% { opacity: 1;    box-shadow: 0 0 5px 2px var(--c), 0 0 10px 4px var(--c); }
+  }
+
+  /* ── Page layout ── */
+  .page { position: relative; z-index: 1; }
+
+  header {
+    text-align: center;
+    padding: 10px 20px 28px;
+  }
+  header .subtitle {
+    font-size: 0.85rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #e87ea1;
+    margin-bottom: 12px;
+  }
+  header h1 {
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    font-weight: normal;
+    background: linear-gradient(135deg, #ffc2d4 0%, #e87ea1 50%, #ffc2d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.35;
+    text-shadow: none;
+  }
+  header .hearts { font-size: 1.4rem; margin-top: 6px; color: #e87ea1; }
+
+  /* ── Search ── */
+  .search-section {
+    max-width: 500px;
+    margin: 0 auto 36px;
+    padding: 0 20px;
+    text-align: center;
+  }
+  .search-section p {
+    margin-bottom: 14px;
+    color: #e8b0c0;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+  }
+  .search-wrap { position: relative; }
+
+  #nameInput {
+    width: 100%;
+    padding: 14px 52px 14px 20px;
+    border-radius: 40px;
+    border: 1px solid #e87ea155;
+    background: rgba(255,255,255,0.05);
+    color: #f0e6c8;
+    font-size: 1.05rem;
+    font-family: 'Georgia', serif;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    -webkit-appearance: none;
+  }
+  #nameInput::placeholder { color: #9a7080; }
+  #nameInput:focus {
+    border-color: #e87ea1;
+    box-shadow: 0 0 0 3px rgba(232,126,161,0.15);
+  }
+
+  #searchBtn {
+    position: absolute;
+    right: 8px; top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, #e87ea1, #a03060);
+    border: none;
+    border-radius: 50%;
+    width: 38px; height: 38px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  #searchBtn:hover { transform: translateY(-50%) scale(1.1); }
+
+  /* Suggestions dropdown */
+  #suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #0d0d25;
+    border: 1px solid #e87ea144;
+    border-radius: 12px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    text-align: left;
+  }
+  #suggestions.show { display: block; }
+  .suggestion-item {
+    padding: 12px 18px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #f0c8d8;
+    transition: background 0.15s;
+  }
+  .suggestion-item:hover, .suggestion-item.active {
+    background: rgba(232,126,161,0.15);
+    color: #ffc2d4;
+  }
+
+  /* Result card */
+  #result {
+    margin-top: 20px;
+    display: none;
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+  .result-card {
+    background: linear-gradient(135deg, rgba(232,126,161,0.09), rgba(232,126,161,0.03));
+    border: 1px solid #e87ea166;
+    border-radius: 16px;
+    padding: 20px 24px;
+    text-align: center;
+  }
+  .result-card .found-name {
+    font-size: 1.1rem;
+    color: #e87ea1;
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+  }
+  .result-card .table-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #a07888;
+    margin-bottom: 4px;
+  }
+  .result-card .table-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #ffc2d4;
+    text-shadow: 0 0 20px rgba(255,194,212,0.5);
+  }
+  .result-card.not-found { border-color: #aa444455; }
+  .result-card.not-found .table-number { color: #cc6666; font-size: 1rem; }
+
+  /* ── Floor plan ── */
+  .floorplan-section {
+    max-width: 860px;
+    margin: 0 auto 60px;
+    padding: 0 16px;
+  }
+  .floorplan-title {
+    text-align: center;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: #a07888;
+    margin-bottom: 18px;
+  }
+  .venue-map {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid #e87ea122;
+    border-radius: 20px;
+    padding: 20px 12px 24px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Stage banner */
+  .stage-banner {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  .stage-box {
+    display: inline-block;
+    padding: 7px 40px;
+    border: 1px solid #e87ea155;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #e87ea199;
+    background: rgba(232,126,161,0.05);
+  }
+
+  /* Table grid */
+  .tables-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    min-width: 320px;
+  }
+  .table-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+
+  /* Individual table circle */
+  .tbl {
+    width: 58px; height: 58px;
+    border-radius: 50%;
+    border: 1.5px solid #e87ea155;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: default;
+    transition: all 0.4s ease;
+    position: relative;
+    background: radial-gradient(circle at 40% 35%, rgba(232,126,161,0.06), transparent 70%);
+    flex-shrink: 0;
+  }
+  .tbl .tbl-num {
+    font-size: 0.72rem;
+    font-weight: bold;
+    color: #e87ea199;
+    line-height: 1;
+  }
+  .tbl .tbl-label {
+    font-size: 0.42rem;
+    color: #a07888;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    margin-top: 2px;
+    text-align: center;
+    max-width: 54px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Sweetheart table */
+  .tbl.sweetheart {
+    width: 78px; height: 78px;
+    border-color: #ffc2d488;
+    background: radial-gradient(circle at 40% 35%, rgba(255,194,212,0.12), transparent 70%);
+  }
+  .tbl.sweetheart .tbl-num { color: #ffc2d4; font-size: 0.9rem; }
+  .tbl.sweetheart .tbl-label { font-size: 0.44rem; color: #d08098; max-width: 72px; }
+
+  /* Highlighted (found) table */
+  .tbl.lit {
+    border-color: #ffc2d4 !important;
+    background: radial-gradient(circle at 50% 50%, rgba(255,194,212,0.28), rgba(255,194,212,0.05) 70%) !important;
+    animation: tablePulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 16px 4px rgba(255,194,212,0.45), 0 0 32px 8px rgba(232,126,161,0.25) !important;
+  }
+  .tbl.lit .tbl-num { color: #fff !important; }
+  @keyframes tablePulse {
+    0%, 100% { box-shadow: 0 0 16px 4px rgba(255,194,212,0.45), 0 0 32px 8px rgba(232,126,161,0.25); }
+    50%       { box-shadow: 0 0 26px 8px rgba(255,194,212,0.75), 0 0 52px 14px rgba(232,126,161,0.4); }
+  }
+
+  /* Vendors label */
+  .tbl.vendors { border-style: dashed; opacity: 0.6; }
+
+  /* Dance floor */
+  .dance-floor {
+    width: 100px; height: 34px;
+    margin: 6px auto 0;
+    border: 1px dashed #e87ea133;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.52rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #a0708866;
+  }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.75rem;
+    color: #6a2840;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 500px) {
+    header { padding: 8px 16px 22px; }
+
+    .search-section { padding: 0 14px; margin-bottom: 28px; }
+    #nameInput { font-size: 16px; padding: 13px 50px 13px 16px; }
+
+    .floorplan-section { padding: 0 8px; }
+    .venue-map { padding: 14px 6px 18px; }
+
+    .tbl { width: 46px; height: 46px; }
+    .tbl .tbl-num { font-size: 0.62rem; }
+    .tbl .tbl-label { font-size: 0.38rem; max-width: 42px; }
+    .tbl.sweetheart { width: 62px; height: 62px; }
+    .tbl.sweetheart .tbl-num { font-size: 0.75rem; }
+    .tbl.sweetheart .tbl-label { font-size: 0.38rem; max-width: 58px; }
+
+    .table-row { gap: 6px; }
+    .tables-grid { gap: 8px; }
+
+    .stage-box { padding: 6px 20px; font-size: 0.62rem; }
+    .dance-floor { width: 80px; }
+    .result-card .table-number { font-size: 1.6rem; }
+  }
+
+  @media (max-width: 360px) {
+    .tbl { width: 40px; height: 40px; }
+    .tbl.sweetheart { width: 54px; height: 54px; }
+    .table-row { gap: 5px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+
+<div class="page">
+  <div class="string-lights" id="lights-top"></div>
+
+  <header>
+    <div class="subtitle">You are cordially invited</div>
+    <h1>Welcome to the Reception of<br>Jeet &amp; Preena</h1>
+    <div class="hearts">✦ ♡ ✦</div>
+  </header>
+
+  <div class="search-section">
+    <p>Search your name to find your table</p>
+    <div class="search-wrap">
+      <input type="text" id="nameInput" placeholder="Enter your name…" autocomplete="off" />
+      <button id="searchBtn" aria-label="Search">→</button>
+      <div id="suggestions"></div>
+    </div>
+    <div id="result"></div>
+  </div>
+
+  <div class="floorplan-section">
+    <div class="floorplan-title">Seating Arrangement</div>
+    <div class="venue-map">
+      <div class="stage-banner"><div class="stage-box">✦ Stage ✦</div></div>
+      <div class="tables-grid" id="tablesGrid"></div>
+      <div class="dance-floor">Dance Floor</div>
+    </div>
+  </div>
+
+  <footer>August 2026 &nbsp;✦&nbsp; With love, Jeet &amp; Preena</footer>
+</div>
+
+<script>
+const GUESTS = {"Preena":"Sweetheart Table","Rajiv Patel":"Table 2","Jayshree Raol":"Table 3","Jaymin Patel":"Table 4","Anandi Patel":"Table 6","Jeet":"Sweetheart Table","Vrunda Patel":"Table 2","Shilvant Raol":"Table 3","Bhavina Patel":"Table 4","Satish Patel":"Table 6","Priyanka Patel and Jainil Modi":"Table 2","Anushree Raol":"Table 3","Aashvi Patel":"Table 4","JAGDISH PATEL":"Table 6","Kalaben Patel":"Table 2","Jaywantsinh Raol":"Table 3","Shivang Patel":"Table 4","Jaya Patel":"Table 6","Sudhaben Patel":"Table 2","Bhanuben Raol":"Table 3","Kirti Patel":"Table 4","Ghanshyam Patel":"Table 6","Hariharbhai Patel":"Table 2","Dhairyashil Rana":"Table 3","Haresh Patel":"Table 4","Daxaben Patel":"Table 6","Jaymita Patel":"Table 2","Twinkleba Rana":"Table 3","Mansi Patel":"Table 4","Mahesh Patel":"Table 6","Rahil Patel":"Table 2","Snehalba Rana":"Table 3","Dhruval Patel":"Table 4","Saroj Patel":"Table 6","Natasha Patel":"Table 2","Urvendrasinh Gohil":"Table 3","Hitesh Patel":"Table 6","Bhuma Patel":"Table 2","Geeta Patel":"Table 6","Amit Patel":"Table 2","Anjali Patel":"Table 2","Hinal Patel":"Table 2","Sweta Patel":"Table 2","Mehul Patel and Mihir Patel":"Table 2","Jignesh Patel":"Table 8","Vibhu Patel":"Table 10","Anila Patel":"Table 12","Kishan Patel":"Table 14","Isa Patel":"Table 16","Tina Patel":"Table 8","Urvisha Patel":"Table 10","Chirag Patel":"Table 12","Darshan Patel":"Table 14","Anand Patel":"Table 16","Priya Patel":"Table 8","Krushil Patel":"Table 10","Manisha Patel":"Table 11","Nishita Patel":"Table 14","Hina Patel":"Table 16","Manoj Patel":"Table 23","Mayur Patel":"Table 10","Pritesh Patel":"Table 12","Anuj Patel":"Table 14","Dixit Patel":"Table 16","Dolly Patel":"Table 8","Pooja Thakkar Patel":"Table 10","Sachin Patel":"Table 12","RAJNI PATEL":"Table 14","Jaymeni Patel Gandhi":"Table 16","Jayshil Patel":"Table 8","Ravi Patel":"Table 10","Jagu Patel":"Table 12","Sushila Patel":"Table 14","Anish Gandhi":"Table 16","Poonam Beniwal-Patel":"Table 8","Ketan Patel":"Table 10","Chetna Patel":"Table 12","Alpa Patel":"Table 14","Mehul Patel":"Table 16","Jigi Shah":"Table 8","Niketa Patel":"Table 10","Jaimin Patel":"Table 12","Sandip Patel":"Table 14","Reema Patel":"Table 16","Suhas Shah":"Table 8","Nisha Patel":"Table 10","Jigar Patel":"Table 12","Shashi Patel":"Table 10","Varsha Patel":"Table 12","Jasmine Vaghani":"Table 18","Neil Gade":"Table 20","Saagar Patel":"Table 5","Khusbu Shah":"Table 22","Anbar Zaheed":"Table 24","Vinit Vaghani":"Table 18","Juhi Desai Gade":"Table 20","Parita Shah":"Table 5","Harry Sood":"Table 22","Ahad Rafi":"Table 24","Charishma Doddamareddy":"Table 18","Jay Patel":"Table 20","Parth Mohanty":"Table 5","Joel Parado":"Table 22","Kinga Rzezinowska":"Table 24","Puja Patel":"Table 18","Aditi Vala":"Table 20","Neel Patel":"Table 5","Vy Huynh":"Table 22","Zlatko Nicolov":"Table 24","Ayush Patel":"Table 18","Ashley Prabakar":"Table 20","Bijal Patel":"Table 5","Lubna Hashim":"Table 22","shaan patel":"Table 24","Pooja Patel":"Table 18","Vaishnavi Sadigale":"Table 20","Jaikrit Patel":"Table 5","Lauren Schrader":"Table 22","Adil Kaleem":"Table 24","Fenil Patel":"Table 18","Krupa Patel":"Table 20","Gabrielle Piechota":"Table 5","Gabe Jezierski":"Table 22","Rabia Kong":"Table 24","Rohan Meda":"Table 18","Krishna Patel":"Table 20","Pranay Mohanty":"Table 5","Sakhee Sakhardande":"Table 22","Lucas Migut":"Table 24","Pathik Patel":"Table 18","Dalila Alcala":"Table 20","Aarush Patel":"Table 5","Marielle Martinez":"Table 22","Adil Shedbalkar":"Table 24","Karan Rami":"Table 18","Jesus Garcia":"Table 20","Samarth Patel":"Table 5","Joshua Martinez":"Table 22","Suzanne Collins":"Table 24","Sheldon Ticala":"Table 7","Yash Patel":"Table 9","Alka Patel":"Table 11","Shweta Patel":"Table 13","Priti Agarwal (related to Asmita auntie and friends with Payal and Vaimans":"Table 15","Brittany Nguyen":"Table 7","Sava Patel":"Table 9","Jayesh Patel":"Table 11","Dhaval Patel":"Table 13","Ritesh Agarwal":"Table 15","JP Lavengco":"Table 7","Mudit Kumar":"Table 9","Asmita Patel":"Table 11","Vimal Patel":"Table 13","payal patel":"Table 15","Justin Pangan":"Table 7","Jackie Du":"Table 9","Prashant Mohanty":"Table 11","Rinku Patel":"Table 13","Vaimans Patel":"Table 15","John Ray Cuartero":"Table 7","Katrina Favis":"Table 9","Umangi Patel":"Table 11","Priti Patel":"Table 13","Rahul Vishwanath":"Table 15","Emilie Washer":"Table 7","Meet Patel":"Table 9","Bakul Patel":"Table 11","Prakash Patel":"Table 13","Suranjini Vishwanath":"Table 15","Harsheta Kumar":"Table 9","Jigar PATEL":"Table 11","Varshaben Patel":"Table 13","Shloka Vishwanath":"Table 15","Shivam Patel":"Table 9","Sweety Patel":"Table 11","Dinesh Patel":"Table 13","Sridevi Kotla":"Table 15","Rakesh Patel":"Table 11","Gaurang Patel":"Table 13","Srinivasa Kotla":"Table 15","Jagruti Patel":"Table 13","Sai Kotla":"Table 15","Kamini Barodia":"Table 17","Ruchir Shah":"Table 19","Sunil Shah":"Table 21","Prasun Vyas":"Table 23","Tejal Joshi":"Table 25","Nimish Barodia":"Table 17","Tanvi Shah":"Table 19","Falguni Shah":"Table 21","Ekta Vyas":"Table 23","Jigar Joshi":"Table 25","Jinita Kothari":"Table 17","Vimal Shah":"Table 19","Yani Shah":"Table 21","Mihir Gajjar":"Table 23","Mahi Joshi":"Table 25","Manendra Kothari":"Table 17","Shilpa Shah":"Table 19","Kinjal Shah":"Table 21","Shilpa Gajjar":"Table 23","Dominic Zeier":"Table 25","Himanshu Shah":"Table 17","Deven Shah":"Table 19","Darshak Shah":"Table 21","Shefalee Shah":"Table 23","Rakesh Gupta":"Table 25","Pinky Shah":"Table 17","Maulika Shah":"Table 19","Dipa Shah":"Table 21","Nishith Shah":"Table 23","Dishi Gupta":"Table 25","Naimesh Shah":"Table 17","Neema Shah":"Table 19","Sanjay Bhavsar":"Table 21","Reyaan Gupta":"Table 25","Samir Shah":"Table 17","Jatan Shah":"Table 19","Chhaya Bhavsar":"Table 21","Amisha Patel":"Table 23","Samrat Kothawala":"Table 25","Pooja Shah":"Table 17","Aaru Shah":"Table 19","Vikram Sheth":"Table 21","Bijal Kinkhabwala":"Table 23","Naha Patel Pandya":"Table 25","Aniket Shah":"Table 19","Purviben Sheth":"Table 21","Nehali Kinkhabwala":"Table 23","Pramay Pandya":"Table 25","Keval Shah":"Table 27","Hita Patel":"Table 29","Maggie Wheat":"Table 26","Tony Raval":"Table 31","Puja Studios":"Table 28","Shikha Shah":"Table 27","Connor Schack":"Table 29","Tinamarie Bauman":"Table 26","Sonal Raval":"Table 31","Tej Shah":"Table 27","Vyoma Barodia":"Table 29","Barry Rosen":"Table 26","Sai Raval":"Table 31","Wynn Films":"Table 28","Priyansh Barodia":"Table 27","Dave Patel":"Table 29","Kendra Rosen":"Table 26","Kirtibhai Colorado Patel":"Table 31","Shravi Kothari":"Table 27","Isha Shah":"Table 29","Debra Travers":"Table 26","Sudha Patel":"Table 31","Vaibhavi":"Table 28","Aatman Kothari":"Table 27","Kinjal Chaudhari":"Table 29","Jenna Ashley":"Table 26","Yesha Vaidya":"Table 31","Prayag":"Table 28","Jainam Shah":"Table 27","Isha Patel":"Table 29","Sylvia Thoma":"Table 26","Rushabh Vaidya":"Table 31","Poonam Creations":"Table 28","Devansh Shah":"Table 27","Shruti Patel":"Table 29","Erin Hephner":"Table 26","Kabir Vaidya":"Table 31","Trishla Shah":"Table 27","Vedant Vyas":"Table 29","Tina Brown":"Table 26","Riya Vyas":"Table 29","Nicte Ruvalcaba":"Table 26","Narendrasinh Parmar":"Table 33","Reenaba Parmar":"Table 33","Avi Parmar":"Table 33","Aayushi Parmar":"Table 33","Kalpesh Jani":"Table 33","Arti Jani":"Table 33","Shailey Jani":"Table 33"};
+
+const LAYOUT = [
+  ['Sweetheart Table'],
+  ['Table 2', null, 'Table 3'],
+  ['Table 4', 'Table 5', 'Table 6', 'Table 7'],
+  ['Table 8', 'Table 9', 'Table 10', 'Table 11', 'Table 12'],
+  ['Table 13', 'Table 14', 'Table 15', 'Table 16'],
+  ['Table 17', 'Table 18', 'Table 19', 'Table 20'],
+  ['Table 21', 'Table 22', 'Table 23', 'Table 24', 'Table 25'],
+  ['Table 26', 'Table 27', 'Table 28', 'Table 29', 'Table 31'],
+  [null, null, 'Table 33', null, null],
+];
+
+function tableDisplayLabel(id) {
+  if (id === 'Sweetheart Table') return '♡';
+  return id.replace('Table ', '');
+}
+function tableSubLabel(id) {
+  if (id === 'Sweetheart Table') return 'Jeet & Preena';
+  if (id === 'Table 2') return "Bride's Family";
+  if (id === 'Table 3') return "Groom's Family";
+  if (id === 'Table 28') return 'Vendors';
+  return '';
+}
+
+// Build table grid
+const grid = document.getElementById('tablesGrid');
+LAYOUT.forEach(row => {
+  const rowEl = document.createElement('div');
+  rowEl.className = 'table-row';
+  row.forEach(tId => {
+    if (!tId) {
+      const sp = document.createElement('div');
+      sp.className = 'tbl-spacer';
+      sp.style.width = '46px';
+      sp.style.flexShrink = '0';
+      rowEl.appendChild(sp);
+      return;
+    }
+    const el = document.createElement('div');
+    el.className = 'tbl' + (tId === 'Sweetheart Table' ? ' sweetheart' : '') + (tId === 'Table 28' ? ' vendors' : '');
+    el.id = 'tbl_' + tId.replace(/\s+/g, '_');
+    el.innerHTML = `<span class="tbl-num">${tableDisplayLabel(tId)}</span>${tableSubLabel(tId) ? `<span class="tbl-label">${tableSubLabel(tId)}</span>` : ''}`;
+    el.title = tId;
+    rowEl.appendChild(el);
+  });
+  grid.appendChild(rowEl);
+});
+
+// ── Stars ──
+const canvas = document.getElementById('stars-canvas');
+const ctx = canvas.getContext('2d');
+let stars = [];
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 200; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.3 + 0.2,
+      phase: Math.random() * Math.PI * 2,
+      speed: Math.random() * 0.007 + 0.003
+    });
+  }
+}
+function drawStars(t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    const a = 0.25 + 0.75 * (0.5 + 0.5 * Math.sin(s.phase + t * s.speed * 60));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,240,255,${a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+resizeCanvas(); initStars(); requestAnimationFrame(drawStars);
+window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+
+// ── Fairy lights ──
+// Warm white + blush tones for the tiny dots
+const fairyColors = ['#fffaf5','#fff0f5','#ffe8f0','#fff5fa','#ffeeff','#fff8f0','#fdf0ff'];
+function buildLights() {
+  const container = document.getElementById('lights-top');
+  container.innerHTML = '';
+  const w = window.innerWidth;
+  const spacing = 20;
+
+  // Two wires
+  [14, 36].forEach((top, wireIdx) => {
+    const wire = document.createElement('div');
+    wire.className = 'fairy-wire';
+    wire.style.top = top + 'px';
+    container.appendChild(wire);
+
+    const offset = wireIdx === 1 ? spacing / 2 : 0;
+    for (let i = 0; i * spacing + offset < w + spacing; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'fairy-dot';
+      const c = fairyColors[(i + wireIdx * 3) % fairyColors.length];
+      dot.style.setProperty('--c', c);
+      dot.style.left = (i * spacing + offset + 6) + 'px';
+      dot.style.top = (top - 2) + 'px';
+      dot.style.background = c;
+      dot.style.animationDelay = (Math.random() * 4) + 's';
+      dot.style.animationDuration = (2 + Math.random() * 3) + 's';
+      container.appendChild(dot);
+    }
+  });
+}
+buildLights();
+window.addEventListener('resize', buildLights);
+
+// ── Search ──
+const input = document.getElementById('nameInput');
+const sugBox = document.getElementById('suggestions');
+const resultBox = document.getElementById('result');
+const allNames = Object.keys(GUESTS);
+let highlighted = -1;
+
+function normalize(s) { return s.toLowerCase().replace(/\s+/g, ' ').trim(); }
+
+function showSuggestions(query) {
+  if (!query || query.length < 2) { sugBox.classList.remove('show'); return; }
+  const q = normalize(query);
+  const matches = allNames.filter(n => normalize(n).includes(q)).slice(0, 8);
+  if (!matches.length) { sugBox.classList.remove('show'); return; }
+  sugBox.innerHTML = matches.map(m => `<div class="suggestion-item" data-name="${m.replace(/"/g,'&quot;')}">${m}</div>`).join('');
+  sugBox.classList.add('show');
+  highlighted = -1;
+  sugBox.querySelectorAll('.suggestion-item').forEach(el => {
+    el.addEventListener('mousedown', () => selectName(el.dataset.name));
+  });
+}
+
+function selectName(name) {
+  input.value = name;
+  sugBox.classList.remove('show');
+  doSearch(name);
+}
+
+function doSearch(query) {
+  if (!query) return;
+  const q = normalize(query);
+  let match = allNames.find(n => normalize(n) === q);
+  if (!match) match = allNames.find(n => normalize(n).includes(q));
+
+  clearLit();
+  if (match) {
+    const table = GUESTS[match];
+    lightTable(table);
+    resultBox.innerHTML = `<div class="result-card">
+      <div class="found-name">${match}</div>
+      <div class="table-label">Your table</div>
+      <div class="table-number">${table}</div>
+    </div>`;
+    resultBox.style.display = 'block';
+    const tblEl = document.getElementById('tbl_' + table.replace(/\s+/g, '_'));
+    if (tblEl) setTimeout(() => tblEl.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+  } else {
+    resultBox.innerHTML = `<div class="result-card not-found">
+      <div class="found-name">Name not found</div>
+      <div class="table-number">Please check with the event coordinator</div>
+    </div>`;
+    resultBox.style.display = 'block';
+  }
+}
+
+function lightTable(tId) {
+  const el = document.getElementById('tbl_' + tId.replace(/\s+/g, '_'));
+  if (el) el.classList.add('lit');
+}
+function clearLit() {
+  document.querySelectorAll('.tbl.lit').forEach(el => el.classList.remove('lit'));
+}
+
+input.addEventListener('input', () => showSuggestions(input.value));
+input.addEventListener('keydown', e => {
+  const items = sugBox.querySelectorAll('.suggestion-item');
+  if (e.key === 'ArrowDown')  { highlighted = Math.min(highlighted + 1, items.length - 1); updateHighlight(items); e.preventDefault(); }
+  else if (e.key === 'ArrowUp')   { highlighted = Math.max(highlighted - 1, -1); updateHighlight(items); e.preventDefault(); }
+  else if (e.key === 'Enter') {
+    if (highlighted >= 0 && items[highlighted]) selectName(items[highlighted].dataset.name);
+    else { sugBox.classList.remove('show'); doSearch(input.value); }
+  } else if (e.key === 'Escape') sugBox.classList.remove('show');
+});
+function updateHighlight(items) { items.forEach((el, i) => el.classList.toggle('active', i === highlighted)); }
+document.getElementById('searchBtn').addEventListener('click', () => { sugBox.classList.remove('show'); doSearch(input.value); });
+document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) sugBox.classList.remove('show'); });
+</script>
+</body>
+</html>
